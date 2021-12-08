@@ -1,0 +1,7 @@
+# pycharm folder
+.idea/
+
+# data folder
+json-result/
+pptx-path/
+pptx-json-data.zip

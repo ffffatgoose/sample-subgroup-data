@@ -545,7 +545,7 @@ def subgroup_data_generation(filePath, outputPath, tmp_s,full_edge=False,front_m
 
             '''
             DATA PREPARATION - 3/3
-            : delete the ignore shape type in group_shapeIdx_list,group_dict 
+            : delete the ignore shape type in group_shapeIdx_list,group_dict
             '''
 
             # dict for transform shapeIdx into shape: {shapeIdx1 : shape json1,shapeIdx2 : shape json2......}
@@ -608,7 +608,7 @@ def subgroup_data_generation(filePath, outputPath, tmp_s,full_edge=False,front_m
 
             '''
             pos-data-type1 : 1/2
-            
+
             - Range: for all groups
             - Query_graph(pos_b): some nodes in this group
             - Target_graph(pos_a): all nodes in this group
@@ -679,7 +679,7 @@ def subgroup_data_generation(filePath, outputPath, tmp_s,full_edge=False,front_m
             pos-data-type2 : 2/2
 
             - Range: for "big" groups
-            - Query_graph(pos_b): all nodes in one group or 
+            - Query_graph(pos_b): all nodes in one group or
             - Target_graph(pos_a): all nodes in this group
             '''
             if len(group_real_list[-1]) -1 >= 1:
@@ -748,7 +748,7 @@ def subgroup_data_generation(filePath, outputPath, tmp_s,full_edge=False,front_m
                 else:
                     '''
                     pos-data-type1 : 2/2
-            
+
                     - Range: for single nodes and "big" groups
                     - Query_graph(pos_b): some nodes in this group
                     - Target_graph(pos_a): all nodes in this group
@@ -1085,6 +1085,69 @@ def subgroup_data_generation(filePath, outputPath, tmp_s,full_edge=False,front_m
     with open("./subgroup-data/graph_dict" + tmp_s, "w", encoding="utf-8")as f:
         f.write(str(graph_num_slide_dict))
 
+def transform_data(fileName,output_name):
+
+    node_labels = []
+    edges = []
+    edges_labels = []
+    graph_idx = []
+
+    node_flag = 1
+    tmp_flag = 0
+
+    graphs = dict()
+    with open(fileName, 'r') as f:
+        lines = [line.strip() for line in f.readlines()]
+        tgraph, graph_cnt = None, 0
+        for i, line in enumerate(lines):
+            if int(graph_cnt)>=4096:
+                break
+            cols = line.split(' ')
+            if cols[0] == 't':
+                node_flag += tmp_flag
+                tmp_flag = 0
+
+                if cols[-1] == '-1' or int(graph_cnt) >= 4096:
+                    break
+                graph_cnt =cols[2]
+
+            elif cols[0] == 'v':
+                # node_num = int(cols[-1]) + node_flag
+                node_labels.append(cols[-1])#str(node_num))
+                graph_idx.append(str(int(graph_cnt)+1))
+                tmp_flag += 1
+            elif cols[0] == 'e':
+                node_num1 = int(cols[1]) + node_flag
+                node_num2 = int(cols[2]) + node_flag
+                edges.append(str(node_num1)+", "+str(node_num2))
+                edges_labels.append(cols[-1])
+                #tgraph.add_edge(AUTO_EDGE_ID, cols[1], cols[2], cols[3])
+        # adapt to input files that do not end with 't # -1'
+
+    with open("./subgroup-data/vault"+output_name+"_node_labels.txt","w",encoding='utf-8')as f:
+        for i in range(len(node_labels)):
+            f.write(str(node_labels[i]))
+            f.write("\n")
+
+    with open("./subgroup-data/vault"+output_name+"_A.txt","w",encoding='utf-8')as f:
+        for i in range(len(edges)):
+            f.write(str(edges[i]))
+            f.write("\n")
+
+    with open("./subgroup-data/vault"+output_name+"_edge_labels.txt","w",encoding='utf-8')as f:
+        for i in range(len(edges_labels)):
+            f.write(str(edges_labels[i]))
+            f.write("\n")
+
+    with open("./subgroup-data/vault"+output_name+"_graph_indicator.txt","w",encoding='utf-8')as f:
+        for i in range(len(graph_idx)):
+            f.write(str(graph_idx[i]))
+            f.write("\n")
+
+    with open("./subgroup-data/vault"+output_name+"_graph_labels.txt","w",encoding='utf-8')as f:
+        for i in range(4096):
+            f.write("1")
+            f.write("\n")
 
 if __name__ == "__main__":
     # origin_data_json_path, save_dataset_path, save_detailed_info_path,
@@ -1094,3 +1157,8 @@ if __name__ == "__main__":
     subgroup_data_generation("./json-result",
                             "./subgroup-data/test",
                             "-test", front_mode=True, group_mode=True, stop_number=8096)
+
+    transform_data("./subgroup-data/test-pos-a", "tryposA")
+    transform_data("./subgroup-data/test-pos-b", "tryposB")
+    transform_data("./subgroup-data/test-neg-a", "trynegA")
+    transform_data("./subgroup-data/test-neg-b", "trynegB")
